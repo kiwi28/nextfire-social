@@ -1,5 +1,12 @@
-export default function UserProfile({ user }) {
+/* eslint-disable @next/next/no-img-element */
 
+import { User } from "../lib/types";
+
+interface UserProfileProps {
+	user: User;
+}
+
+const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 	return (
 		<div className="box-center">
 			<img src={user.photoURL || '/hacker.png'} className="card-img-center" alt="profile_img" />
@@ -10,3 +17,5 @@ export default function UserProfile({ user }) {
 		</div>
 	);
 }
+
+export default UserProfile;

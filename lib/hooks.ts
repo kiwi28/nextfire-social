@@ -3,11 +3,11 @@ import { useContext, useEffect, useState } from "react";
 import { auth, firestore } from "./firebase";
 import { UserContext } from "./context";
 
-export const useUserData = () => useContext(UserContext);
+export const useUserDataCtx = () => useContext(UserContext);
 
-export const useUserDataMain = () => {
+export const useUserDataFireBase = () => {
 	const [user] = useAuthState<any>(auth);
-	const [username, setUsername] = useState(null);
+	const [username, setUsername] = useState<string>(null);
 
 	useEffect(() => {
 		let unsubscribe: () => void;

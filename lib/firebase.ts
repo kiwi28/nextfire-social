@@ -1,4 +1,5 @@
 import firebase from "firebase/compat/app";
+
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 import "firebase/compat/storage";
@@ -40,3 +41,4 @@ export const postToJson = (doc) => {
 };
 
 export const fromMillis = firebase.firestore.Timestamp.fromMillis;
+export const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;

@@ -1,10 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
-import Image from "next/image";
 import Link from "next/link";
-import { useUserData } from "../lib/hooks";
+
+import { auth } from "../lib/firebase";
+import { useCallback } from "react";
+import { useRouter } from "next/router";
+
+import { useUserDataCtx } from "../lib/hooks";
 
 export default function Navbar() {
-	const { user, username } = useUserData()
+	const { user, username } = useUserDataCtx()
+	const router = useRouter()
+
+	const handleSignOut = useCallback(() => {
+		auth.signOut()
+		router.reload()
+	}, [router])
 
 	return (
 		<nav className="navbar">
@@ -19,7 +29,7 @@ export default function Navbar() {
 				{username && (
 					<>
 						<li className="push-left">
-							<button onClick={() => { }}>Sign Out</button>
+							<button onClick={handleSignOut}>Sign Out</button>
 						</li>
 						<li>
 							<Link href="/admin">
@@ -34,7 +44,6 @@ export default function Navbar() {
 					</>
 				)}
 
-				{/* user is not signed OR has not created username */}
 				{!username && (
 					<li>
 						<Link href="/enter">

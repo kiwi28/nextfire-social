@@ -1,70 +1,76 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useCallback, useEffect, useState } from 'react'
-import { auth, firestore, googleAuthProvider } from '../lib/firebase'
-import { useUserData } from '../lib/hooks'
-import { debounce } from 'lodash'
-import toast from 'react-hot-toast'
+import React, { useCallback, useEffect, useState } from "react";
+import { auth, firestore, googleAuthProvider } from "../lib/firebase";
+import { useUserDataCtx, useUserDataFireBase } from "../lib/hooks";
+import debounce from "lodash/debounce";
+import toast from "react-hot-toast";
 
 export default function EnterPage() {
-	const { user, username } = useUserData()
-	console.log(user)
+	const { user, username } = useUserDataFireBase();
 	return (
 		<main>
-			{user ? !username ? <UsernameForm /> : <SignOutButton /> : <SignInButton />}
-			{/* {user ? <><UsernameForm /> <SignOutButton /></> : <SignInButton />} */}
+			{user ? (
+				!username ? (
+					<UsernameForm />
+				) : (
+					<SignOutButton />
+				)
+			) : (
+				<SignInButton />
+			)}
 		</main>
-	)
+	);
 }
 
 const SignInButton = () => {
 	const signInWithGoogle = async () => {
-		await auth.signInWithPopup(googleAuthProvider)
-	}
+		await auth.signInWithPopup(googleAuthProvider);
+	};
 
 	return (
-		<button className='btn-google' onClick={signInWithGoogle}>
-			<img src={'/google.png'} alt="google_logo" />
-			Sign in with google</button>
-	)
-}
+		<button className="btn-google" onClick={signInWithGoogle}>
+			<img src={"/google.png"} alt="google_logo" />
+			Sign in with google
+		</button>
+	);
+};
 
 const SignOutButton = () => {
-	return (
-		<button onClick={() => auth.signOut()}>Sign Out</button>
-	)
-}
+	return <button onClick={() => auth.signOut()}>Sign Out</button>;
+};
 
 const UsernameForm = () => {
-	const [formValue, setFormValue] = useState<string>('');
+	const [formValue, setFormValue] = useState<string>("");
 	const [isValid, setIsValid] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(false);
 
-	const { user, username } = useUserData();
+	const { user, username } = useUserDataCtx();
 
 	const handleSubmit = async (e: React.SyntheticEvent) => {
-		e.preventDefault()
+		e.preventDefault();
 
 		const userDoc = firestore.doc(`users/${user.uid}`);
 		const usernameDoc = firestore.doc(`usernames/${formValue}`);
 
 		try {
 			const batch = firestore.batch();
-			batch.set(userDoc, { username: formValue, photoURL: user.photoURL, displayName: user.displayName });
+			batch.set(userDoc, {
+				username: formValue,
+				photoURL: user.photoURL,
+				displayName: user.displayName,
+			});
 			batch.set(usernameDoc, { uid: user.uid });
 
 			await toast.promise(batch.commit(), {
-				loading: 'Loading...',
+				loading: "Loading...",
 				success: "Username saved.",
 				error: "Uh oh, there was an error!",
-			}
-			)
+			});
 		} catch (e) {
-			toast.error(e.message)
-			console.dir(e)
+			toast.error(e.message);
+			console.dir(e);
 		}
-
-	}
-
+	};
 
 	const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
 		const val = (e.target as HTMLInputElement).value.toLowerCase();
@@ -81,34 +87,44 @@ const UsernameForm = () => {
 			setLoading(true);
 			setIsValid(false);
 		}
-	}
-
+	};
 
 	const checkUsername = useCallback(
 		debounce(async (username: string) => {
-			console.log(username)
 			if (username?.length >= 3) {
-				const ref = firestore.doc(`usernames/${username}`)
+				const ref = firestore.doc(`usernames/${username}`);
 				const { exists } = await ref.get();
-				console.log('Firestore read executed!')
+				console.log("Firestore read executed!");
 				setIsValid(!exists);
 				setLoading(false);
 			}
-		}, 500)
-		, [])
+		}, 500),
+		[]
+	);
 
 	useEffect(() => {
-		checkUsername(formValue)
-	}, [formValue, checkUsername])
+		checkUsername(formValue);
+	}, [formValue, checkUsername]);
 
 	return (
 		!username && (
 			<section>
 				<h3>Choose Username</h3>
-				<form onSubmit={handleSubmit} >
-					<input name="username" placeholder="username" value={formValue} onChange={handleChange} />
-					<UsernameMessage username={formValue} isValid={isValid} loading={loading} />
-					<button type="submit" className='btn-green' disabled={!isValid} >Choose</button>
+				<form onSubmit={handleSubmit}>
+					<input
+						name="username"
+						placeholder="username"
+						value={formValue}
+						onChange={handleChange}
+					/>
+					<UsernameMessage
+						username={formValue}
+						isValid={isValid}
+						loading={loading}
+					/>
+					<button type="submit" className="btn-green" disabled={!isValid}>
+						Choose
+					</button>
 					<h3>Debug State</h3>
 					<div>
 						Username: {formValue}
@@ -120,9 +136,8 @@ const UsernameForm = () => {
 				</form>
 			</section>
 		)
-	)
-}
-
+	);
+};
 
 function UsernameMessage({ username, isValid, loading }) {
 	if (loading) {
