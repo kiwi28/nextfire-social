@@ -1,11 +1,14 @@
-import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { doc, writeBatch } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
 import { auth, db, increment } from "../lib/firebase";
 
-export default async function HeartButton({ postRef }) {
+export default function HeartButton({ postRef }) {
+	// \/\/\/\/- to be continued tbc - \/\/\/
 	const heartRef = doc(postRef, "hearts", auth.currentUser.uid);
 	// const [value, loading, error] = useDocument(heartRef);
-	const heartDoc = await getDoc(heartRef);
-	console.log(heartDoc);
+	const [heartDoc, loading, error, snap] = useDocumentData(heartRef);
+	console.log("heartDoc", heartDoc);
+	console.log("snap", snap);
 
 	const addHeart = async () => {
 		const uid = auth.currentUser.uid;
@@ -25,9 +28,7 @@ export default async function HeartButton({ postRef }) {
 		await batch.commit();
 	};
 
-	console.log("value.exists", heartDoc.exists);
-
-	return heartDoc?.exists ? (
+	return heartDoc && snap?.exists ? (
 		<button onClick={removeHeart}>💔 Unheart</button>
 	) : (
 		<button onClick={addHeart}>💗 Heart</button>
