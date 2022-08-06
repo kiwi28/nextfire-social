@@ -1,63 +1,37 @@
-// import {
-// 	collectionGroup,
-// 	getDocs,
-// 	limit,
-// 	orderBy,
-// 	query,
-// 	where,
-// } from "firebase/firestore";
 import {
+	collection,
 	collectionGroup,
+	doc,
+	getDoc,
 	getDocs,
 	limit,
 	orderBy,
 	query,
+	startAfter,
 	where,
 } from "firebase/firestore";
 import { useState } from "react";
 import Loader from "../components/Loader";
 import PostFeed from "../components/PostFeed";
-import { db, fromMillis, postToJson } from "../lib/firebase";
-import { Post } from "../lib/types";
+import { auth, db, fromMillis, postToJson } from "../lib/firebase";
+import { Post, PostWFB } from "../lib/types";
 
-const LIMIT = 20;
+const LIMIT = 10;
 type HomeProps = {
-	posts: Post[];
+	posts: PostWFB[];
 };
 
-// v9
 export async function getServerSideProps() {
 	const postsQuery = query(
 		collectionGroup(db, "posts"),
-		where("published", "==", "true"),
+		where("published", "==", true),
 		orderBy("createdAt", "desc"),
 		limit(LIMIT)
 	);
-	//ask marius/stefan
-
-	// v8
-	// const postsQuery = db
-	// 	.collectionGroup("posts")
-	// 	.where("published", "==", true)
-	// 	.orderBy("createdAt", "desc")
-	// 	.limit(LIMIT);
 
 	const snapPosts = await getDocs(postsQuery);
-	console.log("snapPosts----------->", snapPosts);
-	const posts = snapPosts.map(postToJson);
-
-	// const querySnapshot2 = await getDocs(postsQuery);
-	// const querySnapshot = await getDocs(postsQuery);
-	// const posts = querySnapshot.docs.map(postToJson);
-	// const posts = [];
-	// console.log("------------>", querySnapshot2);
-
-	// querySnapshot.forEach((doc) => {
-	// doc.data() is never undefined for query doc snapshots
-	// 	console.log(doc.id, " => ", doc.data());
-	// 	posts.push(doc.data());
-	// });
-
+	const posts = snapPosts.docs.map(postToJson);
+	console.log("last:------>", snapPosts.docs[snapPosts.docs.length - 1]);
 	return {
 		props: { posts },
 	};
@@ -66,28 +40,39 @@ export async function getServerSideProps() {
 const Home: React.FC = (props: HomeProps) => {
 	const [posts, setPosts] = useState<Post[]>(props.posts);
 	const [loading, setLoading] = useState<boolean>(false);
+	console.log(posts);
 
 	const [postsEnd, setPostsEnd] = useState<boolean>(false);
-
 	const handleGetMorePosts = async () => {
 		setLoading(true);
-		const last: Post = posts[posts.length - 1];
+		const lastJson = posts[posts.length - 1];
+		const last = await getDoc(
+			doc(db, "users", auth.currentUser.uid, "posts", lastJson.slug)
+		);
 
-		const cursor =
-			typeof last.createdAt === "number"
-				? fromMillis(last.createdAt)
-				: last.createdAt;
+		console.log("last------------>", last);
+		// ? fromDate(new Date(last.createdAt))
 
-		const query = firestore
-			.collection("posts")
-			.where("published", "==", true)
-			.orderBy("createdAt", "desc")
-			.startAfter(cursor)
-			.limit(LIMIT);
+		// const cursor =
+		// 	typeof last.createdAt === "number"
+		// 		? fromMillis(last.createdAt)
+		// 		: last.createdAt;
 
-		const newPosts: Post[] = (await query.get()).docs.map(postToJson);
+		const postsQuery = query(
+			collection(db, "posts"),
+			where("published", "==", true),
+			orderBy("createdAt", "desc"),
+			startAfter(last),
+			limit(LIMIT)
+		);
+
+		const querySnapPosts = await getDocs(postsQuery);
+
+		const newPosts: Post[] = querySnapPosts.docs.map(postToJson);
 
 		setPosts(posts.concat(newPosts));
+		console.log("newPosts----------->", newPosts);
+		// console.log("cursor	----------->", cursor);
 
 		setLoading(false);
 

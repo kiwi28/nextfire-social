@@ -1,9 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useCallback, useEffect, useState } from "react";
-import { auth, firestore, googleAuthProvider } from "../lib/firebase";
+import { auth, db, googleAuthProvider } from "../lib/firebase";
 import { useUserDataCtx, useUserDataFireBase } from "../lib/hooks";
 import debounce from "lodash/debounce";
 import toast from "react-hot-toast";
+import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { signInWithPopup } from "firebase/auth";
 
 export default function EnterPage() {
 	const { user, username } = useUserDataFireBase();
@@ -24,7 +26,7 @@ export default function EnterPage() {
 
 const SignInButton = () => {
 	const signInWithGoogle = async () => {
-		await auth.signInWithPopup(googleAuthProvider);
+		await signInWithPopup(auth, googleAuthProvider);
 	};
 
 	return (
@@ -49,11 +51,12 @@ const UsernameForm = () => {
 	const handleSubmit = async (e: React.SyntheticEvent) => {
 		e.preventDefault();
 
-		const userDoc = firestore.doc(`users/${user.uid}`);
-		const usernameDoc = firestore.doc(`usernames/${formValue}`);
+		const userDoc = doc(db, `users/${user.uid}`);
+		const usernameDoc = doc(db, `usernames/${formValue}`);
 
 		try {
-			const batch = firestore.batch();
+			const batch = writeBatch(db);
+
 			batch.set(userDoc, {
 				username: formValue,
 				photoURL: user.photoURL,
@@ -92,8 +95,8 @@ const UsernameForm = () => {
 	const checkUsername = useCallback(
 		debounce(async (username: string) => {
 			if (username?.length >= 3) {
-				const ref = firestore.doc(`usernames/${username}`);
-				const { exists } = await ref.get();
+				const ref = doc(db, `usernames/${username}`);
+				const { exists } = await getDoc(ref);
 				console.log("Firestore read executed!");
 				setIsValid(!exists);
 				setLoading(false);

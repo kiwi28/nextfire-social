@@ -7,7 +7,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 export const useUserDataCtx = () => useContext(UserContext);
 
 export const useUserDataFireBase = () => {
-	const [user] = useAuthState<any>(auth);
+	const [user] = useAuthState(auth);
 	const [username, setUsername] = useState<string>(null);
 
 	useEffect(() => {

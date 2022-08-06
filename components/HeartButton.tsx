@@ -1,21 +1,36 @@
-import { collection, doc } from "firebase/firestore";
+import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { auth, firestore } from "../lib/firebase";
+import { auth, db, increment } from "../lib/firebase";
 
-export default function Heart({ postRef }) {
-	const heartRef = doc(firestore, postRef, "hearts", auth.currentUser.uid);
-	const [value, loading, error] = useDocument(heartRef);
+export default async function HeartButton({ postRef }) {
+	const heartRef = doc(postRef, "hearts", auth.currentUser.uid);
+	// const [value, loading, error] = useDocument(heartRef);
+	const heartDoc = await getDoc(heartRef);
+	console.log(heartDoc);
 
-	console.log;
+	const addHeart = async () => {
+		const uid = auth.currentUser.uid;
+		const batch = writeBatch(db);
 
-	return (
-		<div>
-			heart:
-			<p>
-				{error && <strong>Error: {JSON.stringify(error)}</strong>}
-				{loading && <span>Document: Loading...</span>}
-				{value && <span>Document: {JSON.stringify(value.data())}</span>}
-			</p>
-		</div>
+		batch.update(postRef, { heartCount: increment(1) });
+		batch.set(heartRef, { uid });
+
+		await batch.commit();
+	};
+	const removeHeart = async () => {
+		const batch = writeBatch(db);
+
+		batch.update(postRef, { heartCount: increment(-1) });
+		batch.delete(heartRef);
+
+		await batch.commit();
+	};
+
+	console.log("value.exists", heartDoc.exists);
+
+	return heartDoc?.exists ? (
+		<button onClick={removeHeart}>💔 Unheart</button>
+	) : (
+		<button onClick={addHeart}>💗 Heart</button>
 	);
 }
