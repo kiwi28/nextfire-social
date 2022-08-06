@@ -1,4 +1,6 @@
 import firebase from "firebase/compat/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
@@ -14,13 +16,22 @@ const firebaseConfig = {
 	measurementId: "G-SC9T4FD6FK",
 };
 
-if (!firebase.apps.length) {
-	firebase.initializeApp(firebaseConfig);
-}
+// v8
+// if (!firebase.apps.length) {
+// 	firebase.initializeApp(firebaseConfig);
+// }
+// -------------
+
+// v9
+getApps().length === 0 && initializeApp(firebaseConfig);
+
+export const app = getApp();
+export const db = getFirestore(app);
+// --------------
 
 export const auth = firebase.auth();
 export const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
-export const firestore = firebase.firestore();
+// export const firestore = firebase.firestore();
 export const storage = firebase.storage();
 
 export async function getUserWithUsername(username: string) {
@@ -42,3 +53,4 @@ export const postToJson = (doc) => {
 
 export const fromMillis = firebase.firestore.Timestamp.fromMillis;
 export const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+export const increment = firebase.firestore.FieldValue.increment;

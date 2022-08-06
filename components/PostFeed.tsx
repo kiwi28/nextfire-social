@@ -24,7 +24,6 @@ type PostItemProps = {
 };
 
 const PostItem: React.FC<PostItemProps> = ({ post }) => {
-	console.log(post);
 	const wordCount = post?.content.trim().split(/\s+/g).length;
 	const minutesToRead = (wordCount / 100 + 1).toFixed(0);
 
