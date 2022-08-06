@@ -1,5 +1,4 @@
 import { doc, getDoc, writeBatch } from "firebase/firestore";
-import { useDocument } from "react-firebase-hooks/firestore";
 import { auth, db, increment } from "../lib/firebase";
 
 export default async function HeartButton({ postRef }) {
