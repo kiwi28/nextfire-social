@@ -1,22 +1,33 @@
+import {
+	collectionGroup,
+	getDocs,
+	limit,
+	orderBy,
+	query,
+	startAfter,
+	where,
+} from "firebase/firestore";
 import { useState } from "react";
 import Loader from "../components/Loader";
 import PostFeed from "../components/PostFeed";
-import { firestore, fromMillis, postToJson } from "../lib/firebase";
-import { Post } from "../lib/types";
+import { db, fromMillis, postToJson } from "../lib/firebase";
+import { Post, PostWFB } from "../lib/types";
 
-const LIMIT = 20;
+const LIMIT = 2;
 type HomeProps = {
-	posts: Post[];
+	posts: PostWFB[];
 };
 
 export async function getServerSideProps() {
-	const postsQuery = firestore
-		.collectionGroup("posts")
-		.where("published", "==", true)
-		.orderBy("createdAt", "desc")
-		.limit(LIMIT);
+	const postsQuery = query(
+		collectionGroup(db, "posts"),
+		where("published", "==", true),
+		orderBy("createdAt", "desc"),
+		limit(LIMIT)
+	);
 
-	const posts = (await postsQuery.get()).docs.map(postToJson);
+	const snapPosts = await getDocs(postsQuery);
+	const posts = snapPosts.docs.map(postToJson);
 
 	return {
 		props: { posts },
@@ -26,26 +37,28 @@ export async function getServerSideProps() {
 const Home: React.FC = (props: HomeProps) => {
 	const [posts, setPosts] = useState<Post[]>(props.posts);
 	const [loading, setLoading] = useState<boolean>(false);
-
 	const [postsEnd, setPostsEnd] = useState<boolean>(false);
 
 	const handleGetMorePosts = async () => {
 		setLoading(true);
-		const last: Post = posts[posts.length - 1];
+		const last = posts[posts.length - 1];
 
 		const cursor =
 			typeof last.createdAt === "number"
 				? fromMillis(last.createdAt)
 				: last.createdAt;
 
-		const query = firestore
-			.collection("posts")
-			.where("published", "==", true)
-			.orderBy("createdAt", "desc")
-			.startAfter(cursor)
-			.limit(LIMIT);
+		const postsQuery = query(
+			collectionGroup(db, "posts"),
+			where("published", "==", true),
+			orderBy("createdAt", "desc"),
+			startAfter(cursor),
+			limit(LIMIT)
+		);
 
-		const newPosts: Post[] = (await query.get()).docs.map(postToJson);
+		const querySnapPosts = await getDocs(postsQuery);
+
+		const newPosts: Post[] = querySnapPosts.docs.map(postToJson);
 
 		setPosts(posts.concat(newPosts));
 

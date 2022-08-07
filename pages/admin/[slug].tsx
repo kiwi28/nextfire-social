@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 
 import AuthCheck from "../../components/AuthCheck";
-import { auth, firestore, serverTimestamp } from "../../lib/firebase";
+import { auth, db, serverTimestamp } from "../../lib/firebase";
 
 import styles from "../../styles/Post.module.css";
 import { useForm } from "react-hook-form";
@@ -39,7 +39,7 @@ function PostManager() {
 	const router = useRouter();
 	const { slug } = router.query;
 
-	const postRef = doc(firestore, `users/${auth.currentUser.uid}/posts/${slug}`);
+	const postRef = doc(db, `users/${auth.currentUser.uid}/posts/${slug}`);
 
 	const [post] = useDocumentData(postRef);
 

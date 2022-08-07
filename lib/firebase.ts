@@ -1,8 +1,19 @@
 import firebase from "firebase/compat/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+	collection,
+	getDocs,
+	getFirestore,
+	limit,
+	query,
+	where,
+} from "firebase/firestore";
 
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
 import "firebase/compat/storage";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
 	apiKey: "AIzaSyBkcs9Q4LpLgD3drCZGdSb0rqxpJcTtSQ0",
@@ -14,19 +25,23 @@ const firebaseConfig = {
 	measurementId: "G-SC9T4FD6FK",
 };
 
-if (!firebase.apps.length) {
-	firebase.initializeApp(firebaseConfig);
-}
+getApps().length === 0 && initializeApp(firebaseConfig);
 
-export const auth = firebase.auth();
-export const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
-export const firestore = firebase.firestore();
-export const storage = firebase.storage();
+export const app = getApp();
+export const db = getFirestore(app);
+
+export const auth = getAuth(app);
+export const googleAuthProvider = new GoogleAuthProvider();
+export const storage = getStorage();
 
 export async function getUserWithUsername(username: string) {
-	const usersRef = firestore.collection("users");
-	const query = usersRef.where("username", "==", username).limit(1);
-	const userDoc = (await query.get()).docs[0];
+	const usersRef = collection(db, "users");
+	const usersQuery = query(
+		usersRef,
+		where("username", "==", username),
+		limit(1)
+	);
+	const userDoc = (await getDocs(usersQuery)).docs[0];
 
 	return userDoc;
 }
@@ -42,3 +57,5 @@ export const postToJson = (doc) => {
 
 export const fromMillis = firebase.firestore.Timestamp.fromMillis;
 export const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+export const increment = firebase.firestore.FieldValue.increment;
+export const fromDate = firebase.firestore.Timestamp.fromDate;
