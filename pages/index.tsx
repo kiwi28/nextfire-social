@@ -1,8 +1,5 @@
 import {
-	collection,
 	collectionGroup,
-	doc,
-	getDoc,
 	getDocs,
 	limit,
 	orderBy,
@@ -13,7 +10,7 @@ import {
 import { useState } from "react";
 import Loader from "../components/Loader";
 import PostFeed from "../components/PostFeed";
-import { auth, db, fromMillis, postToJson } from "../lib/firebase";
+import { db, fromMillis, postToJson } from "../lib/firebase";
 import { Post, PostWFB } from "../lib/types";
 
 const LIMIT = 2;
@@ -31,7 +28,7 @@ export async function getServerSideProps() {
 
 	const snapPosts = await getDocs(postsQuery);
 	const posts = snapPosts.docs.map(postToJson);
-	console.log("last:------>", snapPosts.docs[snapPosts.docs.length - 1]);
+
 	return {
 		props: { posts },
 	};
@@ -40,9 +37,8 @@ export async function getServerSideProps() {
 const Home: React.FC = (props: HomeProps) => {
 	const [posts, setPosts] = useState<Post[]>(props.posts);
 	const [loading, setLoading] = useState<boolean>(false);
-	console.log(posts);
-
 	const [postsEnd, setPostsEnd] = useState<boolean>(false);
+
 	const handleGetMorePosts = async () => {
 		setLoading(true);
 		const last = posts[posts.length - 1];
@@ -53,7 +49,7 @@ const Home: React.FC = (props: HomeProps) => {
 				: last.createdAt;
 
 		const postsQuery = query(
-			collection(db, "posts"),
+			collectionGroup(db, "posts"),
 			where("published", "==", true),
 			orderBy("createdAt", "desc"),
 			startAfter(cursor),
