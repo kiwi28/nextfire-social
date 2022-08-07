@@ -16,7 +16,7 @@ import PostFeed from "../components/PostFeed";
 import { auth, db, fromMillis, postToJson } from "../lib/firebase";
 import { Post, PostWFB } from "../lib/types";
 
-const LIMIT = 10;
+const LIMIT = 2;
 type HomeProps = {
 	posts: PostWFB[];
 };
@@ -45,24 +45,18 @@ const Home: React.FC = (props: HomeProps) => {
 	const [postsEnd, setPostsEnd] = useState<boolean>(false);
 	const handleGetMorePosts = async () => {
 		setLoading(true);
-		const lastJson = posts[posts.length - 1];
-		const last = await getDoc(
-			doc(db, "users", auth.currentUser.uid, "posts", lastJson.slug)
-		);
+		const last = posts[posts.length - 1];
 
-		console.log("last------------>", last);
-		// ? fromDate(new Date(last.createdAt))
-
-		// const cursor =
-		// 	typeof last.createdAt === "number"
-		// 		? fromMillis(last.createdAt)
-		// 		: last.createdAt;
+		const cursor =
+			typeof last.createdAt === "number"
+				? fromMillis(last.createdAt)
+				: last.createdAt;
 
 		const postsQuery = query(
 			collection(db, "posts"),
 			where("published", "==", true),
 			orderBy("createdAt", "desc"),
-			startAfter(last),
+			startAfter(cursor),
 			limit(LIMIT)
 		);
 
@@ -71,8 +65,6 @@ const Home: React.FC = (props: HomeProps) => {
 		const newPosts: Post[] = querySnapPosts.docs.map(postToJson);
 
 		setPosts(posts.concat(newPosts));
-		console.log("newPosts----------->", newPosts);
-		// console.log("cursor	----------->", cursor);
 
 		setLoading(false);
 
